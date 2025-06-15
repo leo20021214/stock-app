@@ -1,31 +1,35 @@
 import streamlit as st
 import yfinance as yf
-import feedparser
+import requests
+from bs4 import BeautifulSoup
 
-st.set_page_config(page_title="股票查詢與智能推薦系統", layout="centered")
+st.set_page_config(page_title="📈 股票查詢與推薦系統", layout="centered")
 
-# 📥 Yahoo RSS 方式查詢新聞
+# 🔍 使用 Google News 擷取新聞標題與連結
 def fetch_news(ticker, limit=5):
-    rss_url = f"https://feeds.finance.yahoo.com/rss/2.0/headline?s={ticker}&region=US&lang=en-US"
-    feed = feedparser.parse(rss_url)
-    
+    search_url = f"https://news.google.com/search?q={ticker}%20site:finance.yahoo.com&hl=zh-TW&gl=TW&ceid=TW:zh-Hant"
+    resp = requests.get(search_url, headers={"User-Agent": "Mozilla/5.0"})
+    soup = BeautifulSoup(resp.text, "html.parser")
+    articles = soup.select("article h3 a")[:limit]
+
     news = []
-    for entry in feed.entries[:limit]:
-        title = entry.title
-        link = entry.link
+    for a in articles:
+        title = a.text.strip()
+        link = a["href"]
+        if not link.startswith("http"):
+            link = "https://news.google.com" + link[1:]
         news.append((title, link))
     return news
 
-# 🔰 標題與輸入欄位
+# 🔧 Streamlit 主頁面
 st.title("📈 股票查詢與智能推薦系統")
 
 code = st.text_input("輸入股票代號（如 2330.TW, AAPL, 2350.HK）")
 cost = st.number_input("輸入買入成本（元）", step=1.0, format="%.2f")
 shares = st.number_input("輸入持有股數", step=1, min_value=1)
-mode = st.radio("選擇策略", ["🔴 短期", "⚪ 長期"])
+mode = st.radio("選擇操作策略", ["🔴 短期", "⚪ 長期"])
 clicked = st.button("查詢")
 
-# ▶ 主程式邏輯
 if clicked and code:
     stock = yf.Ticker(code)
     try:
@@ -36,11 +40,11 @@ if clicked and code:
 
         st.markdown("----")
         st.subheader(f"📌 {name} ({code})")
-        st.write(f"💹 **現價**：{price} 元")
-        st.write(f"📉 **報酬率**：{percent}%")
+        st.write(f"💵 **現價**：{price} 元")
+        st.write(f"📈 **報酬率**：{percent}%")
         st.write(f"💰 **總盈虧**：{profit} 元")
 
-        # 系統建議邏輯
+        # 建議判斷邏輯
         suggestion = ""
         if mode == "🔴 短期":
             if percent >= 5:
@@ -55,11 +59,11 @@ if clicked and code:
             elif percent <= -10:
                 suggestion = "💡 可考慮加碼攤平"
             else:
-                suggestion = "📌 建議長期持有"
+                suggestion = "📌 建議繼續長期持有"
 
         st.success(f"📊 系統建議：{suggestion}")
 
-        # 顯示新聞
+        # 🔍 顯示最新新聞
         st.markdown("----")
         st.subheader("📰 最新新聞：")
         try:
@@ -68,9 +72,9 @@ if clicked and code:
                 for title, link in news_list:
                     st.markdown(f"- [{title}]({link})")
             else:
-                st.warning("目前查無新聞資料。")
+                st.warning("目前查無新聞資料")
         except:
-            st.error("查詢失敗，請檢查代號是否正確或稍後再試")
+            st.error("❌ 查詢失敗，請檢查代號是否正確或稍後再試")
 
     except Exception as e:
-        st.error("查詢失敗，請確認代號是否正確，或稍後再試。")
+        st.error("❌ 查詢失敗，請檢查股票代號是否正確或稍後再試")
