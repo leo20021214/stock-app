@@ -81,3 +81,10 @@ if clicked and code:
 
     except Exception as e:
         st.error("❌ 查詢失敗，請檢查股票代號是否正確或稍後再試")
+
+
+
+
+
+https://news.google.com/search?q=台積電&hl=zh-TW&gl=TW&ceid=TW:zh-Hant
+
