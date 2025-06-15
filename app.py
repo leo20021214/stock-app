@@ -86,5 +86,5 @@ if clicked and code:
 
 
 
-https://news.google.com/search?q=台積電&hl=zh-TW&gl=TW&ceid=TW:zh-Hant
+url = "https://news.google.com/search?q=台積電&hl=zh-TW&gl=TW&ceid=TW:zh-Hant"
 
