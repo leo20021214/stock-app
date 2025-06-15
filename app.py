@@ -5,9 +5,9 @@ from bs4 import BeautifulSoup
 
 st.set_page_config(page_title="📈 股票查詢與推薦系統", layout="centered")
 
-# 🔍 使用 Google News 擷取新聞標題與連結
-def fetch_news(ticker, limit=5):
-    search_url = f"https://news.google.com/search?q={ticker}%20site:finance.yahoo.com&hl=zh-TW&gl=TW&ceid=TW:zh-Hant"
+# ✅ 使用公司名稱查新聞（避免用 ticker 找不到新聞）
+def fetch_news(company_name, limit=5):
+    search_url = f"https://news.google.com/search?q={company_name}&hl=zh-TW&gl=TW&ceid=TW:zh-Hant"
     resp = requests.get(search_url, headers={"User-Agent": "Mozilla/5.0"})
     soup = BeautifulSoup(resp.text, "html.parser")
     articles = soup.select("article h3 a")[:limit]
@@ -21,7 +21,7 @@ def fetch_news(ticker, limit=5):
         news.append((title, link))
     return news
 
-# 🔧 Streamlit 主頁面
+# 🖥️ UI 介面開始
 st.title("📈 股票查詢與智能推薦系統")
 
 code = st.text_input("輸入股票代號（如 2330.TW, AAPL, 2350.HK）")
@@ -44,7 +44,7 @@ if clicked and code:
         st.write(f"📈 **報酬率**：{percent}%")
         st.write(f"💰 **總盈虧**：{profit} 元")
 
-        # 建議判斷邏輯
+        # 🧠 系統建議
         suggestion = ""
         if mode == "🔴 短期":
             if percent >= 5:
@@ -55,7 +55,7 @@ if clicked and code:
                 suggestion = "🔄 建議持有觀望"
         elif mode == "⚪ 長期":
             if percent >= 10:
-                suggestion = "✅ 可分批獲利了結"
+                suggestion = "✅ 長期獲利可考慮分批賣出"
             elif percent <= -10:
                 suggestion = "💡 可考慮加碼攤平"
             else:
@@ -63,11 +63,11 @@ if clicked and code:
 
         st.success(f"📊 系統建議：{suggestion}")
 
-        # 🔍 顯示最新新聞
+        # 📰 顯示最新新聞
         st.markdown("----")
         st.subheader("📰 最新新聞：")
         try:
-            news_list = fetch_news(code)
+            news_list = fetch_news(name)  # ← 用公司名稱搜尋
             if news_list:
                 for title, link in news_list:
                     st.markdown(f"- [{title}]({link})")
@@ -75,6 +75,9 @@ if clicked and code:
                 st.warning("目前查無新聞資料")
         except:
             st.error("❌ 查詢失敗，請檢查代號是否正確或稍後再試")
+
+    except Exception as e:
+        st.error("❌ 查詢失敗，請檢查股票代號是否正確或稍後再試")
 
     except Exception as e:
         st.error("❌ 查詢失敗，請檢查股票代號是否正確或稍後再試")
