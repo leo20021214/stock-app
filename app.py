@@ -7,15 +7,17 @@ def fetch_news(ticker, limit=5):
     url = f"https://finance.yahoo.com/quote/{ticker}/news"
     resp = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
     soup = BeautifulSoup(resp.text, "html.parser")
-    articles = soup.find_all("li", class_="stream-item")[:limit]
+    articles = soup.select("h3 a[href^='/news/']")[:limit]
+    
     news = []
-    for a in articles:
-        title = a.find("h3").get_text() if a.find("h3") else ""
-        link = a.find("a")["href"]
+    for tag in articles:
+        title = tag.get_text().strip()
+        link = tag["href"]
         if not link.startswith("http"):
             link = "https://finance.yahoo.com" + link
         news.append((title, link))
     return news
+
 
 st.title("📈 股票查詢與智能推薦系統")
 code = st.text_input("輸入股票代號（如 2330.TW）")
