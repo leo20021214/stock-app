@@ -43,7 +43,7 @@ if st.button("查詢") and code:
                 suggestion = "⚠️ 建議停損"
             else:
                 suggestion = "🔄 建議觀望"
-        else:
+        elif mode == "長期":
             if percent >= 10:
                 suggestion = "✅ 長期獲利可考慮分批賣出"
             elif percent <= -10:
@@ -59,7 +59,5 @@ if st.button("查詢") and code:
         for t, l in news_list:
             st.markdown(f"- [{t}]({l})")
 
-    except:
-        st.error("查詢失敗，請檢查代號是否正確或稍後再試")
     except Exception as e:
-        st.error("❌ 查詢失敗，請確認代號是否正確或稍後再試。")
+        st.error("查詢失敗，請檢查代號是否正確或稍後再試")
