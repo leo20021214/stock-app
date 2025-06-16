@@ -50,7 +50,7 @@ if submitted and code:
 
         # Google 新聞搜尋連結（使用公司名稱）
         company_name = name.split()[0] if " " in name else name
-        search_url = f"https://www.google.com/search?q={company_name}+site:news.google.com&tbm=nws"
+        search_url = f"https://www.google.com/search?q={company_name}+股票+新聞&tbm=nws"
 
         st.markdown("---")
         st.subheader("📰 最新新聞：")
