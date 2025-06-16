@@ -1,15 +1,33 @@
 import streamlit as st
 import yfinance as yf
+import requests
+from bs4 import BeautifulSoup
 
-st.set_page_config(page_title="股票查詢與智能推薦系統", layout="wide")
+st.set_page_config(page_title="📈 股票查詢與推薦系統", layout="centered")
 
+# 🔍 使用 Google News 擷取新聞標題與連結
+def fetch_news(ticker, limit=5):
+    search_url = f"https://news.google.com/search?q={ticker}%20site:finance.yahoo.com&hl=zh-TW&gl=TW&ceid=TW:zh-Hant"
+    resp = requests.get(search_url, headers={"User-Agent": "Mozilla/5.0"})
+    soup = BeautifulSoup(resp.text, "html.parser")
+    articles = soup.select("article h3 a")[:limit]
+
+    news = []
+    for a in articles:
+        title = a.text.strip()
+        link = a["href"]
+        if not link.startswith("http"):
+            link = "https://news.google.com" + link[1:]
+        news.append((title, link))
+    return news
+
+# 🔧 Streamlit 主頁面
 st.title("📈 股票查詢與智能推薦系統")
 
-# 使用者輸入
-code = st.text_input("輸入股票代號（如 2330.TW）", value="2330.TW")
-cost = st.number_input("輸入買入成本（元）", min_value=0.0, step=1.0)
-shares = st.number_input("輸入持有股數", min_value=1, step=1)
-mode = st.radio("選擇策略", ["短期", "長期"])
+code = st.text_input("輸入股票代號（如 2330.TW, AAPL, 2350.HK）")
+cost = st.number_input("輸入買入成本（元）", step=1.0, format="%.2f")
+shares = st.number_input("輸入持有股數", step=1, min_value=1)
+mode = st.radio("選擇操作策略", ["🔴 短期", "⚪ 長期"])
 clicked = st.button("查詢")
 
 if clicked and code:
@@ -20,23 +38,24 @@ if clicked and code:
         percent = round((price - cost) / cost * 100, 2)
         profit = round((price - cost) * shares, 2)
 
-        st.markdown(f"### 📌 {name} ({code})")
-        st.write(f"💵 現價：{price} 元")
-        st.write(f"📉 報酬率：{percent}%")
-        st.write(f"💰 總盈虧：{profit} 元")
+        st.markdown("----")
+        st.subheader(f"📌 {name} ({code})")
+        st.write(f"💵 **現價**：{price} 元")
+        st.write(f"📈 **報酬率**：{percent}%")
+        st.write(f"💰 **總盈虧**：{profit} 元")
 
-        # 推薦策略
+        # 建議判斷邏輯
         suggestion = ""
-        if mode == "短期":
+        if mode == "🔴 短期":
             if percent >= 5:
-                suggestion = "✅ 建議賣出"
+                suggestion = "✅ 建議賣出（已達獲利目標）"
             elif percent <= -5:
                 suggestion = "⚠️ 建議停損"
             else:
                 suggestion = "🔄 建議持有觀望"
-        elif mode == "長期":
+        elif mode == "⚪ 長期":
             if percent >= 10:
-                suggestion = "✅ 長期獲利可考慮分批賣出"
+                suggestion = "✅ 可分批獲利了結"
             elif percent <= -10:
                 suggestion = "💡 可考慮加碼攤平"
             else:
@@ -44,13 +63,18 @@ if clicked and code:
 
         st.success(f"📊 系統建議：{suggestion}")
 
-        st.divider()
-
-        # 🔍 顯示 Google 新聞連結
+        # 🔍 顯示最新新聞
+        st.markdown("----")
         st.subheader("📰 最新新聞：")
-        query_name = name.split()[0] if " " in name else name
-        search_url = f"https://www.google.com/search?q={query_name}+site:news.google.com&tbm=nws"
-        st.markdown(f"🔗 [點我查看 Google 財經新聞 →]({search_url})")
+        try:
+            news_list = fetch_news(code)
+            if news_list:
+                for title, link in news_list:
+                    st.markdown(f"- [{title}]({link})")
+            else:
+                st.warning("目前查無新聞資料")
+        except:
+            st.error("❌ 查詢失敗，請檢查代號是否正確或稍後再試")
 
     except Exception as e:
         st.error("❌ 查詢失敗")
