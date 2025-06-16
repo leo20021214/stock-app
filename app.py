@@ -55,5 +55,5 @@ if query and code:
         st.components.v1.iframe(google_news_url, height=600, scrolling=True)
 
     except Exception as e:
-        st.error("❌ 查詢失敗，請確認代號是否正確或稍後再試")
+        st.error("❌ 查詢失敗")
 
